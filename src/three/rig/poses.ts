@@ -176,7 +176,8 @@ const sujood: PoseSpec = {
   focus: { target: [0, 0.32, 0.45], size: [1.45, 1.05] },
 };
 
-const SITTING_HANDS: ArmTarget = { wrist: [0.125, 0.28, 0.12], pole: [1, -0.2, -0.5], fingers: [0, -0.22, 1], palm: [0, -1, 0] };
+// Hands rest on top of the robe over the thighs (the cloth sits ~0.36 m high when seated).
+const SITTING_HANDS: ArmTarget = { wrist: [0.13, 0.39, 0.1], pole: [1, -0.2, -0.5], fingers: [0, -0.32, 1], palm: [0, -1, 0.15] };
 
 const jalsa: PoseSpec = {
   id: 'jalsa',
@@ -192,7 +193,7 @@ const jalsa: PoseSpec = {
   focus: { target: [0, 0.6, 0.12], size: [1.1, 1.3] },
 };
 
-const POINTING_RIGHT: ArmTarget = { wrist: [-0.13, 0.292, 0.12], pole: [-1, -0.2, -0.5], fingers: [0, -0.1, 1], palm: [0.55, -0.8, 0] };
+const POINTING_RIGHT: ArmTarget = { wrist: [-0.13, 0.405, 0.1], pole: [-1, -0.2, -0.5], fingers: [0, -0.18, 1], palm: [0.55, -0.8, 0] };
 
 const tashahhud: PoseSpec = {
   ...jalsa,
@@ -212,16 +213,19 @@ const tawarruk: PoseSpec = {
   },
   arms: {
     L: { ...SITTING_HANDS, wrist: [0.15, 0.2, 0.12] },
-    R: { ...POINTING_RIGHT, wrist: [-0.11, 0.215, 0.12] },
+    R: { ...POINTING_RIGHT, wrist: [-0.12, 0.33, 0.1] },
   },
   hands: { L: 'flat', R: 'point' },
   focus: { target: [0, 0.56, 0.12], size: [1.1, 1.25] },
 };
 
+/** In tawarruk the right thigh is higher, so the right hand rests higher on the robe. */
+const TAWARRUK_REST_R: ArmTarget = { wrist: [-0.13, 0.33, 0.1], pole: [-1, -0.2, -0.5], fingers: [0, -0.32, 1], palm: [0, -1, 0.15] };
+
 const tawarrukRest: PoseSpec = {
   ...tawarruk,
   id: 'tawarruk_rest',
-  arms: { L: tawarruk.arms!.L },
+  arms: { L: tawarruk.arms!.L, R: TAWARRUK_REST_R },
   hands: { L: 'flat', R: 'flat' },
 };
 
@@ -231,7 +235,7 @@ function turnHead(base: PoseSpec, id: PoseId, dir: 1 | -1): PoseSpec {
     id,
     fk: { ...base.fk, neck: [4, 30 * dir, 0], head: [8, 42 * dir, 0] },
     hands: { L: 'flat', R: 'flat' },
-    arms: { L: base.arms!.L },
+    arms: { L: base.arms!.L, R: base.id === 'tawarruk' ? TAWARRUK_REST_R : undefined },
   };
 }
 
