@@ -95,7 +95,11 @@ export default function Home() {
                 {t('hero.quick')}
               </a>
             </motion.div>
-            <motion.ul {...fade(0.65)} className="mt-8 hidden flex-nowrap gap-x-4 sm:flex">
+            <motion.p {...fade(0.58)} lang="en" className="mt-5 flex items-center gap-3 text-sm tracking-wide text-muted">
+              <span className="h-px w-8 bg-gradient-to-r from-emerald-glow/70 to-gold/70 rtl:bg-gradient-to-l" aria-hidden="true" />
+              Made By <span className="font-medium text-ivory">Zadeed Haque</span>
+            </motion.p>
+            <motion.ul {...fade(0.65)} className="mt-6 hidden flex-nowrap gap-x-4 sm:flex">
               {features.map((f, i) => (
                 <li key={f.label} className={`flex flex-col items-center gap-2 text-center text-xs text-ivory-2 ${i ? 'border-s hairline ps-4' : ''}`}>
                   <Icon name={f.icon} size={24} className="text-ivory" strokeWidth={1.3} />
