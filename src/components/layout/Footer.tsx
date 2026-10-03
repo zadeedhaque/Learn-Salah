@@ -34,6 +34,9 @@ export function Footer({ compact = false }: { compact?: boolean }) {
           <p>{t('footer.disclaimer')}</p>
           <p className="text-dim">{t('footer.status')}</p>
           <p className="text-dim">{t('footer.copyright')}</p>
+          <p className="text-ivory-2" lang="en">
+            Made By Zadeed Haque
+          </p>
         </div>
       </div>
     </footer>
