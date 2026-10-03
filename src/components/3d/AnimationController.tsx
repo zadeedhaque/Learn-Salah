@@ -27,8 +27,12 @@ export function AnimationController() {
     if (!a) return;
     const practice = MADHHABS[madhhab].practice;
     const opts = consumeTransitionOptions() ?? {};
+    // If the learner moves on mid-transition (e.g. fast scrolling), catch up quickly
+    // instead of lagging behind the text.
+    const speed = opts.speed ?? (a.isAnimating ? 2.2 : 1.15);
     a.transitionToPose(pose, {
       ...opts,
+      speed,
       prefs: { handsFirst: practice.descent === 'hands', restBeforeRising: practice.restBeforeRising },
     });
     useSceneStatus.getState().setProgress(0.95);

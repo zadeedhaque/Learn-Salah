@@ -38,7 +38,8 @@ export default function Learn() {
   const [drawer, setDrawer] = useState(false);
   const sections = useRef<(HTMLElement | null)[]>([]);
   const fromObserver = useRef(false);
-  const programmatic = useRef(0);
+  const programmatic = useRef(false);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setLayout('learn'), [setLayout]);
   useEffect(() => () => setPlaying(false), [setPlaying]);
@@ -50,6 +51,13 @@ export default function Learn() {
     return () => window.clearTimeout(id);
   }, [step, markRecitation]);
 
+  /** The reading line sits a quarter of the way into the visible content area, below the sticky header. */
+  const readingLine = useCallback(() => {
+    const headerBottom = headerRef.current?.getBoundingClientRect().bottom ?? 0;
+    const barH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bar-h')) || 0;
+    return headerBottom + (window.innerHeight - headerBottom - barH) * 0.25;
+  }, []);
+
   // Scroll the active section into view when the step changes via buttons / keys / timeline.
   useEffect(() => {
     if (fromObserver.current) {
@@ -58,30 +66,76 @@ export default function Learn() {
     }
     const el = sections.current[index];
     if (!el) return;
-    programmatic.current = Date.now();
+    programmatic.current = true;
+    const headerBottom = headerRef.current?.getBoundingClientRect().bottom ?? 0;
+    const top = el.getBoundingClientRect().top + window.scrollY - headerBottom - 8;
     const reduced = document.documentElement.classList.contains('reduce-motion');
-    el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    window.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' });
   }, [index, lessonId]);
 
-  // Reading line: a thin band ~40% down the viewport (below the 3D panel on mobile).
+  /*
+   * Scroll sync. IntersectionObserver tracks which sections are near the viewport
+   * (cheap), and a rAF-throttled scroll handler picks the one crossing the reading
+   * line. Unlike a pure observer callback this can never miss an update: the
+   * active step is recomputed whenever scrolling settles, including after
+   * programmatic (button / timeline) scrolls.
+   */
   useEffect(() => {
-    const mobile = window.matchMedia('(max-width: 767px)').matches;
+    const visible = new Set<number>();
     const io = new IntersectionObserver(
       (entries) => {
-        if (Date.now() - programmatic.current < 1100) return;
-        const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (!hit) return;
-        const i = Number((hit.target as HTMLElement).dataset.index);
-        if (Number.isFinite(i) && i !== usePrayerStore.getState().stepIndex) {
-          fromObserver.current = true;
-          goTo(i);
+        for (const e of entries) {
+          const i = Number((e.target as HTMLElement).dataset.index);
+          if (e.isIntersecting) visible.add(i);
+          else visible.delete(i);
         }
       },
-      { rootMargin: mobile ? '-62% 0px -30% 0px' : '-38% 0px -52% 0px', threshold: [0, 0.01] },
+      { rootMargin: '0px', threshold: 0 },
     );
     sections.current.forEach((el) => el && io.observe(el));
-    return () => io.disconnect();
-  }, [steps, goTo]);
+
+    const compute = () => {
+      const line = readingLine();
+      // Prefer the observer's visible set; fall back to scanning every section so a
+      // missed observer callback can never leave the step stale.
+      const candidates = visible.size ? [...visible].sort((a, b) => a - b) : sections.current.map((_, i) => i);
+      let best = -1;
+      for (const i of candidates) {
+        const el = sections.current[i];
+        if (el && el.getBoundingClientRect().top <= line) best = i;
+      }
+      if (best < 0) best = candidates[0] ?? -1;
+      if (best >= 0 && best !== usePrayerStore.getState().stepIndex) {
+        fromObserver.current = true;
+        goTo(best);
+      }
+    };
+
+    let raf = 0;
+    let settle = 0;
+    const onScroll = () => {
+      window.clearTimeout(settle);
+      // Once scrolling stops (programmatic or not), always resynchronise.
+      settle = window.setTimeout(() => {
+        programmatic.current = false;
+        compute();
+      }, 140);
+      if (programmatic.current || raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        compute();
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      io.disconnect();
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      window.clearTimeout(settle);
+      cancelAnimationFrame(raf);
+    };
+  }, [steps, goTo, readingLine]);
 
   // Guided playback: advance automatically; audio (when available) advances on end.
   const hasAudioRef = useRef(false);
@@ -123,7 +177,7 @@ export default function Learn() {
     <div className="learn-content relative z-10 min-h-svh bg-ink md:bg-transparent">
       <div className="bg-ink md:min-h-svh md:border-s md:hairline md:bg-ink/95">
         {/* Lesson header */}
-        <div className="sticky top-[var(--sticky-top)] z-20 border-b hairline bg-ink/90 px-4 py-3 backdrop-blur-xl sm:px-8">
+        <div ref={headerRef} className="sticky top-[var(--sticky-top)] z-20 border-b hairline bg-ink/90 px-4 py-3 backdrop-blur-xl sm:px-8">
           <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-3">
             <button type="button" aria-expanded={chooser} onClick={() => setChooser((c) => !c)} className="flex items-center gap-2 rounded-xl px-1 text-start">
               <span className="eyebrow">{t('learn.lesson')}</span>

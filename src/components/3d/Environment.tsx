@@ -67,7 +67,7 @@ export function SceneEnvironment({ quality }: { quality: Quality }) {
             roughness={0.82}
             metalness={0.25}
             blur={[260, 80]}
-            resolution={512}
+            resolution={256}
             mixBlur={1}
             mixStrength={1.4}
             mixContrast={1}

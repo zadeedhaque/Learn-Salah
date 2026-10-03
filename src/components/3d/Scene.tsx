@@ -1,7 +1,6 @@
 import { Component, Suspense, useEffect, useMemo, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { ContactShadows } from '@react-three/drei';
 import { usePrayerStore } from '@/store/prayerStore';
 import { MODEL_SOURCE } from '@/three/modelConfig';
 import { SceneEnvironment } from './Environment';
@@ -110,7 +109,7 @@ export default function Scene() {
   return (
     <Canvas
       shadows
-      dpr={quality === 'high' ? [1, 2] : [1, 1.5]}
+      dpr={quality === 'high' ? [1, 1.5] : [1, 1.25]}
       camera={{ fov: 30, near: 0.05, far: 60, position: [-2.6, 1.6, 3.6] }}
       gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: false }}
       frameloop={layout === 'hidden' ? 'never' : 'always'}
@@ -132,7 +131,6 @@ export default function Scene() {
         <BodyHighlight />
         <ReadySignal />
       </Suspense>
-      <ContactShadows position={[0, 0.008, 0.25]} scale={[2.4, 3]} blur={2.4} opacity={0.55} far={1.4} resolution={512} frames={quality === 'high' ? Infinity : 1} />
       <CameraController />
     </Canvas>
   );
