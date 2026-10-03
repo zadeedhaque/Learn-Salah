@@ -419,3 +419,18 @@ html[lang='bn'] .uppercase,
 html[lang='ar'] .uppercase {
   text-transform: none;
 }
+
+/*
+ * Bengali vowel signs (ি ে ী …) and Arabic diacritics rise well above the Latin
+ * cap height. Tight display leading plus background-clip:text gradients would
+ * slice them off, so give these scripts taller lines and room inside gradients.
+ */
+html[lang='bn'] .font-display,
+html[lang='ar'] .font-display {
+  line-height: 1.32 !important;
+}
+html[lang='bn'] .text-gradient,
+html[lang='ar'] .text-gradient {
+  padding-block: 0.12em 0.06em;
+  margin-block: -0.08em 0;
+}
